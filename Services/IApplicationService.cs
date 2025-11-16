@@ -8,5 +8,6 @@ public interface IApplicationService
     Task<ApplicationDto?> GetApplicationByIdAsync(int id);
     Task<ApplicationDto> CreateApplicationAsync(CreateApplicationDto createApplicationDto);
     Task<ApplicationDto?> UpdateApplicationStatusAsync(int id, UpdateApplicationStatusDto updateDto, string? changedBy = null);
+    Task<List<ApplicationStatusHistoryDto>> GetStatusHistoryAsync(int applicationId);
 }
 

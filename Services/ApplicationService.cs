@@ -271,5 +271,23 @@ public class ApplicationService : IApplicationService
             throw;
         }
     }
+
+    public async Task<List<ApplicationStatusHistoryDto>> GetStatusHistoryAsync(int applicationId)
+    {
+        return await _context.ApplicationStatusHistories
+            .Where(h => h.ApplicationId == applicationId)
+            .OrderByDescending(h => h.ChangedAt)
+            .Select(h => new ApplicationStatusHistoryDto
+            {
+                Id = h.Id,
+                ApplicationId = h.ApplicationId,
+                PreviousStatus = h.PreviousStatus,
+                NewStatus = h.NewStatus,
+                ChangedAt = h.ChangedAt,
+                ChangedBy = h.ChangedBy,
+                Notes = h.Notes
+            })
+            .ToListAsync();
+    }
 }
 

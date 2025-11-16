@@ -58,3 +58,14 @@ public class PagedResultDto<T>
     public int TotalPages => (int)Math.Ceiling(TotalCount / (double)PageSize);
 }
 
+public class ApplicationStatusHistoryDto
+{
+    public int Id { get; set; }
+    public int ApplicationId { get; set; }
+    public ApplicationStatus PreviousStatus { get; set; }
+    public ApplicationStatus NewStatus { get; set; }
+    public DateTime ChangedAt { get; set; }
+    public string? ChangedBy { get; set; }
+    public string? Notes { get; set; }
+}
+

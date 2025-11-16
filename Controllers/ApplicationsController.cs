@@ -18,7 +18,7 @@ public class ApplicationsController : ControllerBase
     }
 
     [HttpPost]
-    [Authorize(Roles = "Candidate")]
+    [Authorize(Roles = "Candidate,HR")] // allow HR to create applications too
     public async Task<ActionResult<ApplicationDto>> CreateApplication([FromBody] CreateApplicationDto createApplicationDto)
     {
         if (!ModelState.IsValid)
@@ -59,8 +59,16 @@ public class ApplicationsController : ControllerBase
         return Ok(application);
     }
 
+    [HttpGet("{id}/history")]
+    [Authorize(Roles = "HR,Candidate")]
+    public async Task<ActionResult<List<ApplicationStatusHistoryDto>>> GetHistory(int id)
+    {
+        var history = await _applicationService.GetStatusHistoryAsync(id);
+        return Ok(history);
+    }
+
     [HttpPut("{id}/status")]
-    [Authorize(Roles = "HR")]
+    [Authorize(Roles = "HR")] // only HR/Admin updates status
     public async Task<ActionResult<ApplicationDto>> UpdateStatus(int id, [FromBody] UpdateApplicationStatusDto updateDto)
     {
         if (!ModelState.IsValid)
@@ -68,9 +76,16 @@ public class ApplicationsController : ControllerBase
             return BadRequest(ModelState);
         }
 
-        var updated = await _applicationService.UpdateApplicationStatusAsync(id, updateDto, User?.Identity?.Name);
-        if (updated == null) return NotFound();
-        return Ok(updated);
+        try
+        {
+            var updated = await _applicationService.UpdateApplicationStatusAsync(id, updateDto, User?.Identity?.Name);
+            if (updated == null) return NotFound();
+            return Ok(updated);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
     }
 }
 
