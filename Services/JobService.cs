@@ -66,6 +66,14 @@ public class JobService : IJobService
 
     public async Task<JobDto> CreateJobAsync(CreateJobDto createJobDto)
     {
+        // Prevent duplicate titles (case-insensitive)
+        var duplicateTitle = await _context.Jobs
+            .AnyAsync(j => j.Title.ToLower() == createJobDto.Title.ToLower());
+        if (duplicateTitle)
+        {
+            throw new InvalidOperationException("A job with the same title already exists.");
+        }
+
         var job = new Models.Job
         {
             Title = createJobDto.Title,
@@ -80,7 +88,15 @@ public class JobService : IJobService
         };
 
         _context.Jobs.Add(job);
-        await _context.SaveChangesAsync();
+        try
+        {
+            await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateException)
+        {
+            // Enforced by DB unique index
+            throw new InvalidOperationException("A job with the same title already exists.");
+        }
 
         return new JobDto
         {
@@ -101,6 +117,14 @@ public class JobService : IJobService
         var job = await _context.Jobs.FindAsync(id);
         if (job == null) return null;
 
+        // Prevent updating to a duplicate title (case-insensitive) for other rows
+        var duplicateTitle = await _context.Jobs
+            .AnyAsync(j => j.Id != id && j.Title.ToLower() == updateJobDto.Title.ToLower());
+        if (duplicateTitle)
+        {
+            throw new InvalidOperationException("A job with the same title already exists.");
+        }
+
         job.Title = updateJobDto.Title;
         job.Description = updateJobDto.Description;
         job.Department = updateJobDto.Department;
@@ -111,7 +135,15 @@ public class JobService : IJobService
         job.Requirements = string.Join(",", updateJobDto.Requirements ?? new List<string>());
         job.UpdatedAt = DateTime.UtcNow;
 
-        await _context.SaveChangesAsync();
+        try
+        {
+            await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateException)
+        {
+            // Enforced by DB unique index
+            throw new InvalidOperationException("A job with the same title already exists.");
+        }
 
         return new JobDto
         {

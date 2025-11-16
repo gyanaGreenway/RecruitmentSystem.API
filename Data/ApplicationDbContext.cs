@@ -25,6 +25,11 @@ public class ApplicationDbContext : DbContext
             .HasIndex(a => new { a.JobId, a.CandidateId })
             .IsUnique();
 
+        // Prevent duplicate job titles
+        modelBuilder.Entity<Job>()
+            .HasIndex(j => j.Title)
+            .IsUnique();
+
         // Configure relationships
         modelBuilder.Entity<Application>()
             .HasOne(a => a.Job)

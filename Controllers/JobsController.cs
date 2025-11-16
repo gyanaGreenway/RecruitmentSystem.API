@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using RecruitmentSystem.API.DTOs;
 using RecruitmentSystem.API.Services;
 
@@ -40,8 +41,19 @@ public class JobsController : ControllerBase
             return BadRequest(ModelState);
         }
 
-        var job = await _jobService.CreateJobAsync(createJobDto);
-        return CreatedAtAction(nameof(GetJob), new { id = job.Id }, job);
+        try
+        {
+            var job = await _jobService.CreateJobAsync(createJobDto);
+            return CreatedAtAction(nameof(GetJob), new { id = job.Id }, job);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Conflict(new { message = ex.Message });
+        }
+        catch (DbUpdateException)
+        {
+            return Conflict(new { message = "A job with the same title already exists." });
+        }
     }
 
     [HttpPut("{id}")]
@@ -52,9 +64,20 @@ public class JobsController : ControllerBase
             return BadRequest(ModelState);
         }
 
-        var job = await _jobService.UpdateJobAsync(id, updateJobDto);
-        if (job == null) return NotFound();
-        return Ok(job);
+        try
+        {
+            var job = await _jobService.UpdateJobAsync(id, updateJobDto);
+            if (job == null) return NotFound();
+            return Ok(job);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Conflict(new { message = ex.Message });
+        }
+        catch (DbUpdateException)
+        {
+            return Conflict(new { message = "A job with the same title already exists." });
+        }
     }
 
     [HttpDelete("{id}")]
