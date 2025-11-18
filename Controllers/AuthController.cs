@@ -1,6 +1,8 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using RecruitmentSystem.API.DTOs;
 using RecruitmentSystem.API.Services;
+using System.Security.Claims;
 
 namespace RecruitmentSystem.API.Controllers;
 
@@ -35,5 +37,59 @@ public class AuthController : ControllerBase
         }
 
         return Ok(result);
+    }
+
+    [HttpPost("password-reset/start")]
+    public async Task<ActionResult<StartPasswordResetResponseDto>> StartPasswordReset([FromBody] StartPasswordResetDto dto)
+    {
+        if (!ModelState.IsValid) return BadRequest(ModelState);
+        var result = await _authService.StartPasswordResetAsync(dto);
+        return Ok(result);
+    }
+
+    [HttpPost("password-reset/verify-otp")]
+    public async Task<ActionResult<VerifyOtpResponseDto>> VerifyOtp([FromBody] VerifyOtpDto dto)
+    {
+        if (!ModelState.IsValid) return BadRequest(ModelState);
+        try
+        {
+            var result = await _authService.VerifyOtpAsync(dto);
+            return Ok(result);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    [HttpPost("password-reset/confirm")]
+    public async Task<ActionResult> ResetPassword([FromBody] ResetPasswordDto dto)
+    {
+        if (!ModelState.IsValid) return BadRequest(ModelState);
+        var ok = await _authService.ResetPasswordAsync(dto);
+        if (!ok) return BadRequest(new { message = "Invalid or expired reset token." });
+        return NoContent();
+    }
+
+    [Authorize]
+    [HttpPost("change-password")] // self-service change (Candidate and HR)
+    public async Task<ActionResult> ChangePassword([FromBody] ChangePasswordDto dto)
+    {
+        if (!ModelState.IsValid) return BadRequest(ModelState);
+        var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!int.TryParse(userIdClaim, out var userId)) return Unauthorized();
+        var ok = await _authService.ChangePasswordAsync(userId, dto);
+        if (!ok) return BadRequest(new { message = "Current password is incorrect or user not found." });
+        return NoContent();
+    }
+
+    [Authorize(Roles = "HR")]
+    [HttpPost("admin/change-password")] // HR/admin changes a user's password
+    public async Task<ActionResult> AdminChangePassword([FromBody] AdminChangePasswordDto dto)
+    {
+        if (!ModelState.IsValid) return BadRequest(ModelState);
+        var ok = await _authService.AdminChangePasswordAsync(dto);
+        if (!ok) return NotFound(new { message = "User not found." });
+        return NoContent();
     }
 }

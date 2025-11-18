@@ -14,6 +14,11 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 
+// Bind SMTP options from configuration
+builder.Services.Configure<SmtpOptions>(builder.Configuration.GetSection("Email:Smtp"));
+// Register email sender
+builder.Services.AddScoped<IEmailSender, SmtpEmailSender>();
+
 // Swagger/OpenAPI configuration
 builder.Services.AddSwaggerGen(c =>
 {
@@ -74,7 +79,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
         "Server=(localdb)\\mssqllocaldb;Database=RecruitmentSystemDb;Trusted_Connection=True;MultipleActiveResultSets=true"));
 
 // JWT Authentication
-var jwtKey = builder.Configuration["Jwt:Key"] ?? "YourSuperSecretKeyThatIsAtLeast32CharactersLong!";
+var jwtKey = builder.Configuration["Jwt:Key"] ?? "3f9KpL82xQ7mT1bCzR6vN0gHqW4ySdVu!";
 var jwtIssuer = builder.Configuration["Jwt:Issuer"] ?? "RecruitmentSystem";
 var jwtAudience = builder.Configuration["Jwt:Audience"] ?? "RecruitmentSystem";
 
@@ -159,23 +164,33 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 
-// Ensure database is created
+// Ensure database is created and seed optional HR user from configuration
 using (var scope = app.Services.CreateScope())
 {
-    var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-    dbContext.Database.EnsureCreated(); 
-    
-    // Seed initial HR user
-    if (!dbContext.Users.Any(u => u.Role == RecruitmentSystem.API.Models.UserRole.HR))
+    var services = scope.ServiceProvider;
+    var dbContext = services.GetRequiredService<ApplicationDbContext>();
+    var configuration = services.GetRequiredService<IConfiguration>();
+    dbContext.Database.EnsureCreated();
+
+    // Read optional seed values from configuration or environment variables
+    // Set via: Seed:HR:Email and Seed:HR:Password (prefer secrets/env in production)
+    var seedEmail = configuration["Seed:HR:Email"]; // e.g., hr@company.com
+    var seedPassword = configuration["Seed:HR:Password"]; // plain text here; will be hashed
+
+    if (!string.IsNullOrWhiteSpace(seedEmail) && !string.IsNullOrWhiteSpace(seedPassword))
     {
-        var hrUser = new RecruitmentSystem.API.Models.User
+        var exists = dbContext.Users.Any(u => u.Email == seedEmail);
+        if (!exists)
         {
-            Email = "hr@recruitment.com",
-            PasswordHash = BCrypt.Net.BCrypt.HashPassword("Hr@123456"),
-            Role = RecruitmentSystem.API.Models.UserRole.HR
-        };
-        dbContext.Users.Add(hrUser);
-        dbContext.SaveChanges();
+            var hrUser = new RecruitmentSystem.API.Models.User
+            {
+                Email = seedEmail,
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword(seedPassword),
+                Role = RecruitmentSystem.API.Models.UserRole.HR
+            };
+            dbContext.Users.Add(hrUser);
+            dbContext.SaveChanges();
+        }
     }
 }
 

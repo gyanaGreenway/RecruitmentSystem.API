@@ -15,6 +15,8 @@ public class ApplicationDbContext : DbContext
     public DbSet<ApplicationStatusHistory> ApplicationStatusHistories { get; set; }
     public DbSet<User> Users { get; set; }
     public DbSet<Notification> Notifications { get; set; }
+    public DbSet<PasswordResetRequest> PasswordResetRequests { get; set; }
+    public DbSet<CandidateRegistrationRequest> CandidateRegistrationRequests { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -37,6 +39,12 @@ public class ApplicationDbContext : DbContext
         modelBuilder.Entity<Job>()
             .HasIndex(j => j.PublicId)
             .IsUnique();
+
+        modelBuilder.Entity<PasswordResetRequest>()
+            .HasIndex(r => new { r.UserId, r.Verified, r.ExpiresAt });
+
+        modelBuilder.Entity<CandidateRegistrationRequest>()
+            .HasIndex(r => new { r.Email, r.Verified, r.ExpiresAt });
 
         // Configure relationships
         modelBuilder.Entity<Application>()

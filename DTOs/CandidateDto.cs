@@ -9,34 +9,28 @@ public class CandidateDto
     public string LastName { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
     public string Phone { get; set; } = string.Empty;
-    public string ResumeUrl { get; set; } = string.Empty;
+    public string? ResumeUrl { get; set; }
     public string KeySkills { get; set; } = string.Empty;
 }
 
 public class CreateCandidateDto
 {
-    [Required]
-    [StringLength(100)]
+    [Required, StringLength(100)]
     public string FirstName { get; set; } = string.Empty;
 
-    [Required]
-    [StringLength(100)]
+    [Required, StringLength(100)]
     public string LastName { get; set; } = string.Empty;
 
-    [Required]
-    [EmailAddress]
-    [StringLength(200)]
+    [Required, EmailAddress, StringLength(200)]
     public string Email { get; set; } = string.Empty;
 
-    [Required]
-    [StringLength(20)]
+    [Required, StringLength(20)]
     public string Phone { get; set; } = string.Empty;
 
     [StringLength(500)]
-    public string ResumeUrl { get; set; } = string.Empty;
+    public string? ResumeUrl { get; set; }
 
-    [Required]
-    [StringLength(100, MinimumLength = 6)]
+    [Required, StringLength(100, MinimumLength = 6)]
     public string Password { get; set; } = string.Empty;
 
     public string KeySkills { get; set; } = string.Empty;
@@ -44,26 +38,53 @@ public class CreateCandidateDto
 
 public class UpdateCandidateDto
 {
-    [Required]
-    [StringLength(100)]
+    [Required, StringLength(100)]
     public string FirstName { get; set; } = string.Empty;
 
-    [Required]
-    [StringLength(100)]
+    [Required, StringLength(100)]
     public string LastName { get; set; } = string.Empty;
 
-    [Required]
-    [EmailAddress]
-    [StringLength(200)]
+    [Required, EmailAddress, StringLength(200)]
     public string Email { get; set; } = string.Empty;
 
-    [Required]
-    [StringLength(20)]
+    [Required, StringLength(20)]
     public string Phone { get; set; } = string.Empty;
 
     [StringLength(500)]
-    public string ResumeUrl { get; set; } = string.Empty;
+    public string? ResumeUrl { get; set; }
 
     public string KeySkills { get; set; } = string.Empty;
+}
+
+public class StartCandidateRegistrationDto
+{
+    [Required, EmailAddress, StringLength(200)]
+    public string Email { get; set; } = string.Empty;
+
+    [Required, StringLength(20)]
+    public string Phone { get; set; } = string.Empty;
+
+    [Required, StringLength(100)]
+    public string FirstName { get; set; } = string.Empty;
+
+    [Required, StringLength(100)]
+    public string LastName { get; set; } = string.Empty;
+
+    [StringLength(500)]
+    public string? ResumeUrl { get; set; }
+
+    [Required, StringLength(100, MinimumLength = 6)]
+    public string Password { get; set; } = string.Empty;
+
+    public string KeySkills { get; set; } = string.Empty;
+}
+
+public class ConfirmCandidateRegistrationDto
+{
+    [Required]
+    public int RequestId { get; set; }
+
+    [Required, StringLength(8, MinimumLength = 4)]
+    public string Otp { get; set; } = string.Empty;
 }
 

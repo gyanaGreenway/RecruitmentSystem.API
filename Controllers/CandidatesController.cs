@@ -17,6 +17,38 @@ public class CandidatesController : ControllerBase
         _candidateService = candidateService;
     }
 
+    [AllowAnonymous]
+    [HttpPost("register/start")] // send OTP to email, returns request id
+    public async Task<ActionResult<object>> StartRegistration([FromBody] StartCandidateRegistrationDto dto)
+    {
+        if (!ModelState.IsValid) return BadRequest(ModelState);
+        try
+        {
+            var requestId = await _candidateService.StartCandidateRegistrationAsync(dto);
+            return Ok(new { requestId });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Conflict(new { message = ex.Message });
+        }
+    }
+
+    [AllowAnonymous]
+    [HttpPost("register/confirm")] // verify OTP and create account
+    public async Task<ActionResult<CandidateDto>> ConfirmRegistration([FromBody] ConfirmCandidateRegistrationDto dto)
+    {
+        if (!ModelState.IsValid) return BadRequest(ModelState);
+        try
+        {
+            var candidate = await _candidateService.ConfirmCandidateRegistrationAsync(dto);
+            return Ok(candidate);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
     [HttpGet]
     public async Task<ActionResult<PagedResultDto<CandidateDto>>> GetCandidates([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
     {
