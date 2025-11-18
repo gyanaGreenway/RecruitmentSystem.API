@@ -1,8 +1,10 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using RecruitmentSystem.API.Data;
 using RecruitmentSystem.API.DTOs;
 using RecruitmentSystem.API.Services;
+using System.Security.Claims;
 
 namespace RecruitmentSystem.API.Controllers;
 
@@ -11,10 +13,12 @@ namespace RecruitmentSystem.API.Controllers;
 public class ApplicationsController : ControllerBase
 {
     private readonly IApplicationService _applicationService;
+    private readonly ApplicationDbContext _db;
 
-    public ApplicationsController(IApplicationService applicationService)
+    public ApplicationsController(IApplicationService applicationService, ApplicationDbContext db)
     {
         _applicationService = applicationService;
+        _db = db;
     }
 
     [HttpPost]
@@ -24,6 +28,33 @@ public class ApplicationsController : ControllerBase
         if (!ModelState.IsValid)
         {
             return BadRequest(ModelState);
+        }
+
+        // Enforce candidate identity consistency
+        var role = User.FindFirstValue(ClaimTypes.Role);
+        var email = User.FindFirstValue(ClaimTypes.Email) ?? User.Identity?.Name;
+        if (string.Equals(role, "Candidate", StringComparison.OrdinalIgnoreCase))
+        {
+            if (string.IsNullOrWhiteSpace(email))
+            {
+                return Unauthorized(new { message = "Unable to resolve current user email from token." });
+            }
+
+            var candidate = await _db.Candidates.FirstOrDefaultAsync(c => c.Email == email);
+            if (candidate == null)
+            {
+                return BadRequest(new { message = "Candidate profile not found for the logged-in user." });
+            }
+
+            // Ignore any provided CandidateId and use the current user's candidate id
+            createApplicationDto.CandidateId = candidate.Id;
+        }
+        else if (string.Equals(role, "HR", StringComparison.OrdinalIgnoreCase))
+        {
+            if (createApplicationDto.CandidateId <= 0)
+            {
+                return BadRequest(new { message = "CandidateId is required when creating an application as HR." });
+            }
         }
 
         try
@@ -78,7 +109,14 @@ public class ApplicationsController : ControllerBase
 
         try
         {
-            var updated = await _applicationService.UpdateApplicationStatusAsync(id, updateDto, User?.Identity?.Name);
+            // Use email as ChangedBy (preferred). Fallback to userId if email unavailable.
+            string? changedBy = User?.Identity?.Name;
+            if (string.IsNullOrWhiteSpace(changedBy))
+            {
+                changedBy = User?.FindFirstValue(ClaimTypes.Email) ?? User?.FindFirstValue(ClaimTypes.NameIdentifier);
+            }
+
+            var updated = await _applicationService.UpdateApplicationStatusAsync(id, updateDto, changedBy);
             if (updated == null) return NotFound();
             return Ok(updated);
         }

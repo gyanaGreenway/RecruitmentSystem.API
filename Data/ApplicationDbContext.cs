@@ -30,6 +30,14 @@ public class ApplicationDbContext : DbContext
             .HasIndex(j => j.Title)
             .IsUnique();
 
+        // Configure PublicId defaults and uniqueness
+        modelBuilder.Entity<Job>()
+            .Property(j => j.PublicId)
+            .HasDefaultValueSql("NEWID()");
+        modelBuilder.Entity<Job>()
+            .HasIndex(j => j.PublicId)
+            .IsUnique();
+
         // Configure relationships
         modelBuilder.Entity<Application>()
             .HasOne(a => a.Job)

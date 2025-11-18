@@ -25,6 +25,7 @@ public class JobService : IJobService
             .Select(j => new JobDto
             {
                 Id = j.Id,
+                PublicId = j.PublicId,
                 Title = j.Title,
                 Description = j.Description,
                 Department = j.Department,
@@ -53,6 +54,7 @@ public class JobService : IJobService
         return new JobDto
         {
             Id = job.Id,
+            PublicId = job.PublicId,
             Title = job.Title,
             Description = job.Description,
             Department = job.Department,
@@ -76,6 +78,7 @@ public class JobService : IJobService
 
         var job = new Models.Job
         {
+            PublicId = Guid.NewGuid(),
             Title = createJobDto.Title,
             Description = createJobDto.Description,
             Department = createJobDto.Department,
@@ -101,6 +104,7 @@ public class JobService : IJobService
         return new JobDto
         {
             Id = job.Id,
+            PublicId = job.PublicId,
             Title = job.Title,
             Description = job.Description,
             Department = job.Department,
@@ -148,6 +152,7 @@ public class JobService : IJobService
         return new JobDto
         {
             Id = job.Id,
+            PublicId = job.PublicId,
             Title = job.Title,
             Description = job.Description,
             Department = job.Department,
