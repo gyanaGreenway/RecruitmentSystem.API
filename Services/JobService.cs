@@ -169,9 +169,39 @@ public class JobService : IJobService
         var job = await _context.Jobs.FindAsync(id);
         if (job == null) return false;
 
+        var relatedApplications = await _context.Applications.Where(a => a.JobId == id).ToListAsync();
+        if (relatedApplications.Count > 0 && job.IsActive)
+        {
+            // Active job: protect from accidental destructive delete
+            throw new InvalidOperationException("Cannot delete active job while applications exist. Set IsActive to false first.");
+        }
+
+        if (relatedApplications.Count > 0)
+        {
+            // Job already inactive => remove related applications then delete job
+            _context.Applications.RemoveRange(relatedApplications);
+        }
+
         _context.Jobs.Remove(job);
         await _context.SaveChangesAsync();
         return true;
     }
 }
 
+// public async Task<bool> DeleteJobAsync(int id)
+//    {
+//        var job = await _context.Jobs.FindAsync(id);
+//        if (job == null) return false;
+
+//        // Prevent deletion if applications reference this job
+//        var hasApplications = await _context.Applications.AnyAsync(a => a.JobId == id);
+//        if (hasApplications)
+//        {
+//            throw new InvalidOperationException("Cannot delete job because applications exist. Set IsActive to false instead or remove related applications first.");
+//        }
+
+//        _context.Jobs.Remove(job);
+//        await _context.SaveChangesAsync();
+//        return true;
+//    }
+//}

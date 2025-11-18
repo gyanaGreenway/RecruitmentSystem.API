@@ -13,6 +13,7 @@ public class Job
     public DateTime PostedDate { get; set; }
     public DateTime? ClosingDate { get; set; }
     public bool IsActive { get; set; } = true;
+    public int Cycle { get; set; } =1; // hiring cycle
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? UpdatedAt { get; set; }
 

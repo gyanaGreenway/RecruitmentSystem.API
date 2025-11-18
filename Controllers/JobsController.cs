@@ -83,9 +83,16 @@ public class JobsController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteJob(int id)
     {
-        var result = await _jobService.DeleteJobAsync(id);
-        if (!result) return NotFound();
-        return NoContent();
+        try
+        {
+            var result = await _jobService.DeleteJobAsync(id);
+            if (!result) return NotFound();
+            return NoContent();
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Conflict(new { message = ex.Message });
+        }
     }
 }
 

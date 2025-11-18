@@ -5,6 +5,7 @@ public class Application
     public int Id { get; set; }
     public int JobId { get; set; }
     public int CandidateId { get; set; }
+    public int Cycle { get; set; } = 1; // current job cycle snapshot
     public ApplicationStatus Status { get; set; } = ApplicationStatus.New;
     public DateTime AppliedDate { get; set; } = DateTime.UtcNow;
     public string? Notes { get; set; }

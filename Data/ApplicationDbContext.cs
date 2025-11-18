@@ -15,14 +15,16 @@ public class ApplicationDbContext : DbContext
     public DbSet<ApplicationStatusHistory> ApplicationStatusHistories { get; set; }
     public DbSet<User> Users { get; set; }
     public DbSet<Notification> Notifications { get; set; }
+    public DbSet<PasswordResetRequest> PasswordResetRequests { get; set; }
+    public DbSet<CandidateRegistrationRequest> CandidateRegistrationRequests { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
 
-        // Prevent duplicate applications (same Job + Candidate)
+        // Prevent duplicate applications (same Job + Candidate + Cycle)
         modelBuilder.Entity<Application>()
-            .HasIndex(a => new { a.JobId, a.CandidateId })
+            .HasIndex(a => new { a.JobId, a.CandidateId, a.Cycle })
             .IsUnique();
 
         // Prevent duplicate job titles
@@ -33,10 +35,18 @@ public class ApplicationDbContext : DbContext
         // Configure PublicId defaults and uniqueness
         modelBuilder.Entity<Job>()
             .Property(j => j.PublicId)
-            .HasDefaultValueSql("NEWID()");
+            .HasDefaultValueSql("NEWSEQUENTIALID()");
         modelBuilder.Entity<Job>()
             .HasIndex(j => j.PublicId)
             .IsUnique();
+
+        // Defaults for cycles
+        modelBuilder.Entity<Job>()
+            .Property(j => j.Cycle)
+            .HasDefaultValue(1);
+        modelBuilder.Entity<Application>()
+            .Property(a => a.Cycle)
+            .HasDefaultValue(1);
 
         // Configure relationships
         modelBuilder.Entity<Application>()
