@@ -79,7 +79,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
  "Server=(localdb)\\mssqllocaldb;Database=RecruitmentSystemDb;Trusted_Connection=True;MultipleActiveResultSets=true"));
 
 // JWT Authentication
-var jwtKey = builder.Configuration["Jwt:Key"] ?? "YourSuperSecretKeyThatIsAtLeast32CharactersLong!";
+var jwtKey = builder.Configuration["Jwt:Key"] ?? "3f9KpL82xQ7mT1bCzR6vN0gHqW4ySdVu!";
 var jwtIssuer = builder.Configuration["Jwt:Issuer"] ?? "RecruitmentSystem";
 var jwtAudience = builder.Configuration["Jwt:Audience"] ?? "RecruitmentSystem";
 
@@ -164,6 +164,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 
+<<<<<<< HEAD
 // Ensure database is up to date and seed optional HR user from configuration
 using (var scope = app.Services.CreateScope())
 {
@@ -194,6 +195,36 @@ using (var scope = app.Services.CreateScope())
  dbContext.SaveChanges();
  }
  }
+=======
+// Ensure database is created and seed optional HR user from configuration
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    var dbContext = services.GetRequiredService<ApplicationDbContext>();
+    var configuration = services.GetRequiredService<IConfiguration>();
+    dbContext.Database.EnsureCreated();
+
+    // Read optional seed values from configuration or environment variables
+    // Set via: Seed:HR:Email and Seed:HR:Password (prefer secrets/env in production)
+    var seedEmail = configuration["Seed:HR:Email"]; // e.g., hr@company.com
+    var seedPassword = configuration["Seed:HR:Password"]; // plain text here; will be hashed
+
+    if (!string.IsNullOrWhiteSpace(seedEmail) && !string.IsNullOrWhiteSpace(seedPassword))
+    {
+        var exists = dbContext.Users.Any(u => u.Email == seedEmail);
+        if (!exists)
+        {
+            var hrUser = new RecruitmentSystem.API.Models.User
+            {
+                Email = seedEmail,
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword(seedPassword),
+                Role = RecruitmentSystem.API.Models.UserRole.HR
+            };
+            dbContext.Users.Add(hrUser);
+            dbContext.SaveChanges();
+        }
+    }
+>>>>>>> 0dde3112cc163ba687254a43f11c790e5fb680d7
 }
 
 app.Run();

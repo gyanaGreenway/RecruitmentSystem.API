@@ -47,6 +47,7 @@ public class AuthService : IAuthService
         };
     }
 
+<<<<<<< HEAD
     public async Task<RegisterUserResponseDto?> RegisterAsync(RegisterUserDto dto, UserRole role)
     {
         if (dto == null) return null;
@@ -72,6 +73,8 @@ public class AuthService : IAuthService
         };
     }
 
+=======
+>>>>>>> 0dde3112cc163ba687254a43f11c790e5fb680d7
     public async Task<StartPasswordResetResponseDto> StartPasswordResetAsync(StartPasswordResetDto dto)
     {
         var identifier = dto.Identifier.Trim();
@@ -79,7 +82,11 @@ public class AuthService : IAuthService
         if (user == null)
         {
             // Do not leak whether user exists
+<<<<<<< HEAD
             return new StartPasswordResetResponseDto { RequestId = 0, Method = "Unknown" };
+=======
+            return new StartPasswordResetResponseDto { RequestId =0, Method = "Unknown" };
+>>>>>>> 0dde3112cc163ba687254a43f11c790e5fb680d7
         }
 
         // Choose contact method (email for now). For SMS, you'd look up phone on candidate profile.
@@ -98,7 +105,11 @@ public class AuthService : IAuthService
             Destination = destination,
             OtpHash = otpHash,
             ExpiresAt = expires,
+<<<<<<< HEAD
             Attempts = 0,
+=======
+            Attempts =0,
+>>>>>>> 0dde3112cc163ba687254a43f11c790e5fb680d7
             Verified = false,
             ResetToken = Guid.Empty
         };
