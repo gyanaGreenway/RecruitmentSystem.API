@@ -25,29 +25,26 @@ public class AuthService : IAuthService
         if (loginDto == null) return null;
 
         var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == loginDto.Email);
-        if (user == null)
+        if (user == null) return null;
+
+        if (!BCrypt.Net.BCrypt.Verify(loginDto.Password, user.PasswordHash)) return null;
+
+
+        int? candidateId = null;
+        if (user.Role == UserRole.Candidate)
         {
-            return null;
+            candidateId = await _context.Candidates
+                .Where(c => c.Email == user.Email)
+                .Select(c => (int?)c.Id)
+                .FirstOrDefaultAsync();
         }
 
-        var passwordValid = BCrypt.Net.BCrypt.Verify(loginDto.Password, user.PasswordHash);
-        if (!passwordValid)
-        {
-            return null;
-        }
 
         var token = GenerateJwtToken(user);
-
-        return new LoginResponseDto
-        {
-            Token = token,
-            Role = user.Role.ToString(),
-            UserId = user.Id,
-            Email = user.Email
-        };
+        return new LoginResponseDto { Token = token, Role = user.Role.ToString(), UserId = user.Id, Email = user.Email, CandidateId = candidateId };
     }
 
-<<<<<<< HEAD
+
     public async Task<RegisterUserResponseDto?> RegisterAsync(RegisterUserDto dto, UserRole role)
     {
         if (dto == null) return null;
@@ -73,27 +70,19 @@ public class AuthService : IAuthService
         };
     }
 
-=======
->>>>>>> 0dde3112cc163ba687254a43f11c790e5fb680d7
+
     public async Task<StartPasswordResetResponseDto> StartPasswordResetAsync(StartPasswordResetDto dto)
     {
         var identifier = dto.Identifier.Trim();
         var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == identifier);
         if (user == null)
         {
-            // Do not leak whether user exists
-<<<<<<< HEAD
             return new StartPasswordResetResponseDto { RequestId = 0, Method = "Unknown" };
-=======
-            return new StartPasswordResetResponseDto { RequestId =0, Method = "Unknown" };
->>>>>>> 0dde3112cc163ba687254a43f11c790e5fb680d7
         }
 
-        // Choose contact method (email for now). For SMS, you'd look up phone on candidate profile.
         var method = ContactMethod.Email;
         var destination = user.Email;
 
-        // Generate OTP and hash it
         var otp = GenerateNumericOtp(6);
         var otpHash = BCrypt.Net.BCrypt.HashPassword(otp);
         var expires = DateTime.UtcNow.AddMinutes(10);
@@ -105,19 +94,12 @@ public class AuthService : IAuthService
             Destination = destination,
             OtpHash = otpHash,
             ExpiresAt = expires,
-<<<<<<< HEAD
             Attempts = 0,
-=======
-            Attempts =0,
->>>>>>> 0dde3112cc163ba687254a43f11c790e5fb680d7
             Verified = false,
             ResetToken = Guid.Empty
         };
         _context.PasswordResetRequests.Add(record);
         await _context.SaveChangesAsync();
-
-        // TODO: send OTP via email/SMS provider (out of scope here)
-        // e.g., EmailService.Send(destination, $"Your verification code is {otp}")
 
         return new StartPasswordResetResponseDto
         {

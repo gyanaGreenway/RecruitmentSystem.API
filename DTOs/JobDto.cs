@@ -15,6 +15,7 @@ public class JobDto
     public DateTime PostedDate { get; set; }
     public DateTime? ClosingDate { get; set; }
     public bool IsActive { get; set; }
+    public List<string> Requirements { get; set; } = new();
 }
 
 public class CreateJobDto
@@ -40,10 +41,8 @@ public class CreateJobDto
 
     public DateTime? ClosingDate { get; set; }
 
-    // Requirements as list of skill strings
     public List<string>? Requirements { get; set; }
 
-    // Whether the job is active
     public bool IsActive { get; set; } = true;
 }
 

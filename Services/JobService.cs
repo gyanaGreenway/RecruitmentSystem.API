@@ -33,7 +33,10 @@ public class JobService : IJobService
                 Salary = j.Salary,
                 PostedDate = j.PostedDate,
                 ClosingDate = j.ClosingDate,
-                IsActive = j.IsActive
+                IsActive = j.IsActive,
+                Requirements = (j.Requirements ?? string.Empty)
+                    .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                    .ToList()
             })
             .ToListAsync();
 
@@ -62,7 +65,10 @@ public class JobService : IJobService
             Salary = job.Salary,
             PostedDate = job.PostedDate,
             ClosingDate = job.ClosingDate,
-            IsActive = job.IsActive
+            IsActive = job.IsActive,
+            Requirements = (job.Requirements ?? string.Empty)
+                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .ToList()
         };
     }
 
@@ -84,7 +90,7 @@ public class JobService : IJobService
             Department = createJobDto.Department,
             Location = createJobDto.Location,
             Salary = createJobDto.Salary,
-            Requirements = string.Join(",", createJobDto.Requirements ?? new List<string>()),
+            Requirements = string.Join(',', createJobDto.Requirements ?? new List<string>()),
             PostedDate = DateTime.UtcNow,
             ClosingDate = createJobDto.ClosingDate,
             IsActive = createJobDto.IsActive
@@ -112,7 +118,10 @@ public class JobService : IJobService
             Salary = job.Salary,
             PostedDate = job.PostedDate,
             ClosingDate = job.ClosingDate,
-            IsActive = job.IsActive
+            IsActive = job.IsActive,
+            Requirements = (job.Requirements ?? string.Empty)
+                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .ToList()
         };
     }
 
@@ -136,7 +145,7 @@ public class JobService : IJobService
         job.Salary = updateJobDto.Salary;
         job.ClosingDate = updateJobDto.ClosingDate;
         job.IsActive = updateJobDto.IsActive;
-        job.Requirements = string.Join(",", updateJobDto.Requirements ?? new List<string>());
+        job.Requirements = string.Join(',', updateJobDto.Requirements ?? new List<string>());
         job.UpdatedAt = DateTime.UtcNow;
 
         try
@@ -160,7 +169,10 @@ public class JobService : IJobService
             Salary = job.Salary,
             PostedDate = job.PostedDate,
             ClosingDate = job.ClosingDate,
-            IsActive = job.IsActive
+            IsActive = job.IsActive,
+            Requirements = (job.Requirements ?? string.Empty)
+                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .ToList()
         };
     }
 

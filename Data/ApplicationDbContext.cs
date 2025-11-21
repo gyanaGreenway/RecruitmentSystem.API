@@ -40,7 +40,7 @@ public class ApplicationDbContext : DbContext
             .HasIndex(j => j.PublicId)
             .IsUnique();
 
-<<<<<<< HEAD
+
         // Defaults for cycles
         modelBuilder.Entity<Job>()
             .Property(j => j.Cycle)
@@ -48,13 +48,13 @@ public class ApplicationDbContext : DbContext
         modelBuilder.Entity<Application>()
             .Property(a => a.Cycle)
             .HasDefaultValue(1);
-=======
+
         modelBuilder.Entity<PasswordResetRequest>()
             .HasIndex(r => new { r.UserId, r.Verified, r.ExpiresAt });
 
         modelBuilder.Entity<CandidateRegistrationRequest>()
             .HasIndex(r => new { r.Email, r.Verified, r.ExpiresAt });
->>>>>>> 0dde3112cc163ba687254a43f11c790e5fb680d7
+
 
         // Configure relationships
         modelBuilder.Entity<Application>()

@@ -3,10 +3,9 @@ using Microsoft.AspNetCore.Mvc;
 using RecruitmentSystem.API.DTOs;
 using RecruitmentSystem.API.Services;
 using System.Security.Claims;
-<<<<<<< HEAD
+
 using RecruitmentSystem.API.Models;
-=======
->>>>>>> 0dde3112cc163ba687254a43f11c790e5fb680d7
+
 
 namespace RecruitmentSystem.API.Controllers;
 
@@ -96,7 +95,7 @@ public class AuthController : ControllerBase
         if (!ok) return NotFound(new { message = "User not found." });
         return NoContent();
     }
-<<<<<<< HEAD
+
 
     [HttpPost("register/candidate")] // public candidate self-registration
     public async Task<ActionResult<RegisterUserResponseDto>> RegisterCandidate([FromBody] RegisterUserDto dto)
@@ -128,6 +127,5 @@ public class AuthController : ControllerBase
             return Conflict(new { message = ex.Message });
         }
     }
-=======
->>>>>>> 0dde3112cc163ba687254a43f11c790e5fb680d7
+
 }
