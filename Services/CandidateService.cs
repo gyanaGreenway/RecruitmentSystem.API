@@ -14,27 +14,90 @@ public class CandidateService : ICandidateService
         _context = context;
     }
 
+    private static CandidateDto Map(Candidate c)
+    {
+        return new CandidateDto
+        {
+            Id = c.Id,
+            FirstName = c.FirstName,
+            LastName = c.LastName,
+            Email = c.Email,
+            Phone = c.Phone,
+            ResumeUrl = c.ResumeUrl,
+            ResumeHeadline = c.ResumeHeadline,
+            KeySkills = (c.KeySkills ?? string.Empty).Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList(),
+            ProfileSummary = c.ProfileSummary,
+            Accomplishments = c.Accomplishments,
+            CareerProfile = c.CareerProfile,
+            PersonalDetails = new CandidatePersonalDetailsDto
+            {
+                DateOfBirth = c.DateOfBirth,
+                Gender = c.Gender,
+                Nationality = c.Nationality,
+                MaritalStatus = c.MaritalStatus,
+                Address = c.Address,
+                City = c.City,
+                State = c.State,
+                ZipCode = c.ZipCode,
+                Country = c.Country
+            },
+            Employment = c.Employment.Select(e => new CandidateEmploymentItemDto
+            {
+                Id = e.Id,
+                JobTitle = e.JobTitle,
+                Company = e.Company,
+                WorkArea = e.WorkArea,
+                StartDate = e.StartDate,
+                EndDate = e.EndDate,
+                CurrentlyWorking = e.CurrentlyWorking,
+                Description = e.Description
+            }).ToList(),
+            Education = c.Education.Select(e => new CandidateEducationItemDto
+            {
+                Id = e.Id,
+                Degree = e.Degree,
+                Field = e.Field,
+                Institution = e.Institution,
+                StartDate = e.StartDate,
+                EndDate = e.EndDate,
+                Grade = e.Grade,
+                Description = e.Description
+            }).ToList(),
+            ITSkills = c.ITSkills.Select(s => new CandidateSkillItemDto
+            {
+                Id = s.Id,
+                Skill = s.Skill,
+                Proficiency = s.Proficiency
+            }).ToList(),
+            Projects = c.Projects.Select(p => new CandidateProjectItemDto
+            {
+                Id = p.Id,
+                Title = p.Title,
+                Description = p.Description,
+                Link = p.Link,
+                StartDate = p.StartDate,
+                EndDate = p.EndDate
+            }).ToList(),
+            IsDeleted = c.IsDeleted,
+            RowVersion = c.RowVersion != null ? Convert.ToBase64String(c.RowVersion) : null
+        };
+    }
+
     public async Task<PagedResultDto<CandidateDto>> GetAllCandidatesAsync(int pageNumber, int pageSize)
     {
-        var query = _context.Candidates.AsQueryable();
+        var query = _context.Candidates
+            .Include(c => c.Employment)
+            .Include(c => c.Education)
+            .Include(c => c.ITSkills)
+            .Include(c => c.Projects)
+            .AsQueryable();
         var totalCount = await query.CountAsync();
-
         var candidates = await query
             .OrderByDescending(c => c.CreatedAt)
             .Skip((pageNumber - 1) * pageSize)
             .Take(pageSize)
-            .Select(c => new CandidateDto
-            {
-                Id = c.Id,
-                FirstName = c.FirstName,
-                LastName = c.LastName,
-                Email = c.Email,
-                Phone = c.Phone,
-                ResumeUrl = c.ResumeUrl,
-                KeySkills = c.KeySkills
-            })
+            .Select(c => Map(c))
             .ToListAsync();
-
         return new PagedResultDto<CandidateDto>
         {
             Items = candidates,
@@ -46,92 +109,218 @@ public class CandidateService : ICandidateService
 
     public async Task<CandidateDto?> GetCandidateByIdAsync(int id)
     {
-        var candidate = await _context.Candidates.FindAsync(id);
-        if (candidate == null) return null;
-
-        return new CandidateDto
-        {
-            Id = candidate.Id,
-            FirstName = candidate.FirstName,
-            LastName = candidate.LastName,
-            Email = candidate.Email,
-            Phone = candidate.Phone,
-            ResumeUrl = candidate.ResumeUrl,
-            KeySkills = candidate.KeySkills
-        };
+        var candidate = await _context.Candidates
+            .Include(c => c.Employment)
+            .Include(c => c.Education)
+            .Include(c => c.ITSkills)
+            .Include(c => c.Projects)
+            .FirstOrDefaultAsync(c => c.Id == id);
+        return candidate == null ? null : Map(candidate);
     }
 
-    public async Task<CandidateDto> CreateCandidateAsync(CreateCandidateDto createCandidateDto)
+    public async Task<CandidateDto> CreateCandidateAsync(CreateCandidateDto dto)
     {
-        var candidate = new Models.Candidate
+        var candidate = new Candidate
         {
-            FirstName = createCandidateDto.FirstName,
-            LastName = createCandidateDto.LastName,
-            Email = createCandidateDto.Email,
-            Phone = createCandidateDto.Phone,
-            ResumeUrl = createCandidateDto.ResumeUrl,
-            PasswordHash = BCrypt.Net.BCrypt.HashPassword(createCandidateDto.Password),
-            KeySkills = createCandidateDto.KeySkills
+            FirstName = dto.FirstName,
+            LastName = dto.LastName,
+            Email = dto.Email,
+            Phone = dto.Phone,
+            ResumeUrl = dto.ResumeUrl ?? string.Empty,
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password, workFactor: 11),
+            ResumeHeadline = dto.ResumeHeadline,
+            KeySkills = string.Join(',', dto.KeySkills ?? new List<string>()),
+            ProfileSummary = dto.ProfileSummary,
+            Accomplishments = dto.Accomplishments,
+            CareerProfile = dto.CareerProfile,
+            DateOfBirth = dto.PersonalDetails?.DateOfBirth,
+            Gender = dto.PersonalDetails?.Gender ?? string.Empty,
+            Nationality = dto.PersonalDetails?.Nationality ?? string.Empty,
+            MaritalStatus = dto.PersonalDetails?.MaritalStatus ?? string.Empty,
+            Address = dto.PersonalDetails?.Address ?? string.Empty,
+            City = dto.PersonalDetails?.City ?? string.Empty,
+            State = dto.PersonalDetails?.State ?? string.Empty,
+            ZipCode = dto.PersonalDetails?.ZipCode ?? string.Empty,
+            Country = dto.PersonalDetails?.Country ?? string.Empty
         };
-
         _context.Candidates.Add(candidate);
         await _context.SaveChangesAsync();
 
-        // Also create a User record for login
-        var user = new Models.User
-        {
-            Email = createCandidateDto.Email,
-            PasswordHash = candidate.PasswordHash,
-            Role = Models.UserRole.Candidate
-        };
-        _context.Users.Add(user);
+        // User record
+        _context.Users.Add(new User { Email = candidate.Email, PasswordHash = candidate.PasswordHash, Role = UserRole.Candidate });
         await _context.SaveChangesAsync();
 
-        return new CandidateDto
+        // Child collections (after candidate Id exists)
+        if (dto.Employment.Any())
         {
-            Id = candidate.Id,
-            FirstName = candidate.FirstName,
-            LastName = candidate.LastName,
-            Email = candidate.Email,
-            Phone = candidate.Phone,
-            ResumeUrl = candidate.ResumeUrl,
-            KeySkills = candidate.KeySkills
-        };
+            foreach (var e in dto.Employment)
+            {
+                _context.CandidateEmployment.Add(new CandidateEmployment
+                {
+                    CandidateId = candidate.Id,
+                    JobTitle = e.JobTitle,
+                    Company = e.Company,
+                    WorkArea = e.WorkArea,
+                    StartDate = e.StartDate,
+                    EndDate = e.EndDate,
+                    CurrentlyWorking = e.CurrentlyWorking,
+                    Description = e.Description
+                });
+            }
+        }
+        if (dto.Education.Any())
+        {
+            foreach (var e in dto.Education)
+            {
+                _context.CandidateEducation.Add(new CandidateEducation
+                {
+                    CandidateId = candidate.Id,
+                    Degree = e.Degree,
+                    Field = e.Field,
+                    Institution = e.Institution,
+                    StartDate = e.StartDate,
+                    EndDate = e.EndDate,
+                    Grade = e.Grade,
+                    Description = e.Description
+                });
+            }
+        }
+        if (dto.ITSkills.Any())
+        {
+            foreach (var s in dto.ITSkills)
+            {
+                _context.CandidateSkills.Add(new CandidateSkill
+                {
+                    CandidateId = candidate.Id,
+                    Skill = s.Skill,
+                    Proficiency = s.Proficiency
+                });
+            }
+        }
+        if (dto.Projects.Any())
+        {
+            foreach (var p in dto.Projects)
+            {
+                _context.CandidateProjects.Add(new CandidateProject
+                {
+                    CandidateId = candidate.Id,
+                    Title = p.Title,
+                    Description = p.Description,
+                    Link = p.Link,
+                    StartDate = p.StartDate,
+                    EndDate = p.EndDate
+                });
+            }
+        }
+        if (dto.Employment.Any() || dto.Education.Any() || dto.ITSkills.Any() || dto.Projects.Any())
+        {
+            await _context.SaveChangesAsync();
+        }
+
+        return await GetCandidateByIdAsync(candidate.Id) ?? Map(candidate);
     }
 
-    public async Task<CandidateDto?> UpdateCandidateAsync(int id, UpdateCandidateDto updateCandidateDto)
+    public async Task<CandidateDto?> UpdateCandidateAsync(int id, UpdateCandidateDto dto)
     {
-        var candidate = await _context.Candidates.FindAsync(id);
+        var candidate = await _context.Candidates
+            .Include(c => c.Employment)
+            .Include(c => c.Education)
+            .Include(c => c.ITSkills)
+            .Include(c => c.Projects)
+            .FirstOrDefaultAsync(c => c.Id == id);
         if (candidate == null) return null;
 
-        candidate.FirstName = updateCandidateDto.FirstName;
-        candidate.LastName = updateCandidateDto.LastName;
-        candidate.Email = updateCandidateDto.Email;
-        candidate.Phone = updateCandidateDto.Phone;
-        candidate.ResumeUrl = updateCandidateDto.ResumeUrl;
-        candidate.KeySkills = updateCandidateDto.KeySkills;
+        // Concurrency check
+        var currentVersion = candidate.RowVersion != null ? Convert.ToBase64String(candidate.RowVersion) : null;
+        if (currentVersion != dto.RowVersion) throw new InvalidOperationException("Candidate record has been modified by another process.");
+
+        candidate.FirstName = dto.FirstName;
+        candidate.LastName = dto.LastName;
+        candidate.Email = dto.Email;
+        candidate.Phone = dto.Phone;
+        candidate.ResumeUrl = dto.ResumeUrl ?? string.Empty;
+        candidate.ResumeHeadline = dto.ResumeHeadline;
+        candidate.KeySkills = string.Join(',', dto.KeySkills ?? new List<string>());
+        candidate.ProfileSummary = dto.ProfileSummary;
+        candidate.Accomplishments = dto.Accomplishments;
+        candidate.CareerProfile = dto.CareerProfile;
+        candidate.DateOfBirth = dto.PersonalDetails?.DateOfBirth;
+        candidate.Gender = dto.PersonalDetails?.Gender ?? string.Empty;
+        candidate.Nationality = dto.PersonalDetails?.Nationality ?? string.Empty;
+        candidate.MaritalStatus = dto.PersonalDetails?.MaritalStatus ?? string.Empty;
+        candidate.Address = dto.PersonalDetails?.Address ?? string.Empty;
+        candidate.City = dto.PersonalDetails?.City ?? string.Empty;
+        candidate.State = dto.PersonalDetails?.State ?? string.Empty;
+        candidate.ZipCode = dto.PersonalDetails?.ZipCode ?? string.Empty;
+        candidate.Country = dto.PersonalDetails?.Country ?? string.Empty;
         candidate.UpdatedAt = DateTime.UtcNow;
 
+        // Replace child collections: simplistic approach (could optimize diffing)
+        _context.CandidateEmployment.RemoveRange(candidate.Employment);
+        _context.CandidateEducation.RemoveRange(candidate.Education);
+        _context.CandidateSkills.RemoveRange(candidate.ITSkills);
+        _context.CandidateProjects.RemoveRange(candidate.Projects);
         await _context.SaveChangesAsync();
 
-        return new CandidateDto
+        foreach (var e in dto.Employment)
         {
-            Id = candidate.Id,
-            FirstName = candidate.FirstName,
-            LastName = candidate.LastName,
-            Email = candidate.Email,
-            Phone = candidate.Phone,
-            ResumeUrl = candidate.ResumeUrl,
-            KeySkills = candidate.KeySkills
-        };
+            _context.CandidateEmployment.Add(new CandidateEmployment
+            {
+                CandidateId = candidate.Id,
+                JobTitle = e.JobTitle,
+                Company = e.Company,
+                WorkArea = e.WorkArea,
+                StartDate = e.StartDate,
+                EndDate = e.EndDate,
+                CurrentlyWorking = e.CurrentlyWorking,
+                Description = e.Description
+            });
+        }
+        foreach (var e in dto.Education)
+        {
+            _context.CandidateEducation.Add(new CandidateEducation
+            {
+                CandidateId = candidate.Id,
+                Degree = e.Degree,
+                Field = e.Field,
+                Institution = e.Institution,
+                StartDate = e.StartDate,
+                EndDate = e.EndDate,
+                Grade = e.Grade,
+                Description = e.Description
+            });
+        }
+        foreach (var s in dto.ITSkills)
+        {
+            _context.CandidateSkills.Add(new CandidateSkill
+            {
+                CandidateId = candidate.Id,
+                Skill = s.Skill,
+                Proficiency = s.Proficiency
+            });
+        }
+        foreach (var p in dto.Projects)
+        {
+            _context.CandidateProjects.Add(new CandidateProject
+            {
+                CandidateId = candidate.Id,
+                Title = p.Title,
+                Description = p.Description,
+                Link = p.Link,
+                StartDate = p.StartDate,
+                EndDate = p.EndDate
+            });
+        }
+        await _context.SaveChangesAsync();
+
+        return await GetCandidateByIdAsync(candidate.Id);
     }
 
     public async Task<bool> DeleteCandidateAsync(int id)
     {
         var candidate = await _context.Candidates.FindAsync(id);
         if (candidate == null) return false;
-
-        _context.Candidates.Remove(candidate);
+        candidate.IsDeleted = true; // soft delete
         await _context.SaveChangesAsync();
         return true;
     }
@@ -139,37 +328,22 @@ public class CandidateService : ICandidateService
     public async Task<List<CandidateDto>> SearchCandidatesAsync(string query)
     {
         if (string.IsNullOrWhiteSpace(query)) return new List<CandidateDto>();
-
         query = query.ToLower().Trim();
-
-        var results = await _context.Candidates
+        return await _context.Candidates
+            .Include(c => c.Employment)
+            .Include(c => c.Education)
+            .Include(c => c.ITSkills)
+            .Include(c => c.Projects)
             .Where(c => c.FirstName.ToLower().Contains(query) || c.LastName.ToLower().Contains(query) || c.Email.ToLower().Contains(query) || c.KeySkills.ToLower().Contains(query))
-            .Select(c => new CandidateDto
-            {
-                Id = c.Id,
-                FirstName = c.FirstName,
-                LastName = c.LastName,
-                Email = c.Email,
-                Phone = c.Phone,
-                ResumeUrl = c.ResumeUrl,
-                KeySkills = c.KeySkills
-            })
+            .Select(c => Map(c))
             .ToListAsync();
-
-        return results;
     }
 
     public async Task<int> StartCandidateRegistrationAsync(StartCandidateRegistrationDto dto)
     {
-        // Reject if email already exists as user or candidate
         var existsUser = await _context.Users.AnyAsync(u => u.Email == dto.Email);
         var existsCandidate = await _context.Candidates.AnyAsync(c => c.Email == dto.Email);
-        if (existsUser || existsCandidate)
-        {
-            throw new InvalidOperationException("An account with this email already exists.");
-        }
-
-        // Generate OTP and store hashed request
+        if (existsUser || existsCandidate) throw new InvalidOperationException("An account with this email already exists.");
         var otp = GenerateNumericOtp(6);
         var rec = new CandidateRegistrationRequest
         {
@@ -177,8 +351,8 @@ public class CandidateService : ICandidateService
             LastName = dto.LastName,
             Email = dto.Email,
             Phone = dto.Phone,
-            ResumeUrl = dto.ResumeUrl,
-            KeySkills = dto.KeySkills,
+            ResumeUrl = dto.ResumeUrl ?? string.Empty,
+            KeySkills = dto.KeySkillsRaw,
             PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password),
             OtpHash = BCrypt.Net.BCrypt.HashPassword(otp),
             ExpiresAt = DateTime.UtcNow.AddMinutes(10),
@@ -187,48 +361,27 @@ public class CandidateService : ICandidateService
         };
         _context.CandidateRegistrationRequests.Add(rec);
         await _context.SaveChangesAsync();
-
-        // TODO: send OTP via email provider
         return rec.Id;
     }
 
     public async Task<CandidateDto> ConfirmCandidateRegistrationAsync(ConfirmCandidateRegistrationDto dto)
     {
         var rec = await _context.CandidateRegistrationRequests.FirstOrDefaultAsync(r => r.Id == dto.RequestId);
-        if (rec == null || rec.ExpiresAt < DateTime.UtcNow)
-        {
-            throw new InvalidOperationException("Registration request expired or not found.");
-        }
+        if (rec == null || rec.ExpiresAt < DateTime.UtcNow) throw new InvalidOperationException("Registration request expired or not found.");
         if (rec.Verified)
         {
-            // Already created? try to find candidate
-            var existing = await _context.Candidates.FirstOrDefaultAsync(c => c.Email == rec.Email);
-            if (existing != null)
-            {
-                return new CandidateDto
-                {
-                    Id = existing.Id,
-                    FirstName = existing.FirstName,
-                    LastName = existing.LastName,
-                    Email = existing.Email,
-                    Phone = existing.Phone,
-                    ResumeUrl = existing.ResumeUrl,
-                    KeySkills = existing.KeySkills
-                };
-            }
+            var existing = await _context.Candidates
+                .Include(c => c.Employment)
+                .Include(c => c.Education)
+                .Include(c => c.ITSkills)
+                .Include(c => c.Projects)
+                .FirstOrDefaultAsync(c => c.Email == rec.Email);
+            if (existing != null) return Map(existing);
         }
-
         rec.Attempts++;
-        if (!BCrypt.Net.BCrypt.Verify(dto.Otp, rec.OtpHash))
-        {
-            await _context.SaveChangesAsync();
-            throw new InvalidOperationException("Invalid verification code.");
-        }
-
-        // Mark verified and create account
+        if (!BCrypt.Net.BCrypt.Verify(dto.Otp, rec.OtpHash)) { await _context.SaveChangesAsync(); throw new InvalidOperationException("Invalid verification code."); }
         rec.Verified = true;
         await _context.SaveChangesAsync();
-
         var candidate = new Candidate
         {
             FirstName = rec.FirstName,
@@ -241,28 +394,9 @@ public class CandidateService : ICandidateService
         };
         _context.Candidates.Add(candidate);
         await _context.SaveChangesAsync();
-
-        var user = new User
-        {
-            Email = rec.Email,
-            PasswordHash = rec.PasswordHash,
-            Role = UserRole.Candidate
-        };
-        _context.Users.Add(user);
+        _context.Users.Add(new User { Email = rec.Email, PasswordHash = rec.PasswordHash, Role = UserRole.Candidate });
         await _context.SaveChangesAsync();
-
-        // TODO: send confirmation email: "Your account was created successfully."
-
-        return new CandidateDto
-        {
-            Id = candidate.Id,
-            FirstName = candidate.FirstName,
-            LastName = candidate.LastName,
-            Email = candidate.Email,
-            Phone = candidate.Phone,
-            ResumeUrl = candidate.ResumeUrl,
-            KeySkills = candidate.KeySkills
-        };
+        return Map(candidate);
     }
 
     private static string GenerateNumericOtp(int length)

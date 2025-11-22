@@ -23,12 +23,9 @@ public class AuthService : IAuthService
     public async Task<LoginResponseDto?> LoginAsync(LoginDto loginDto)
     {
         if (loginDto == null) return null;
-
         var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == loginDto.Email);
         if (user == null) return null;
-
         if (!BCrypt.Net.BCrypt.Verify(loginDto.Password, user.PasswordHash)) return null;
-
 
         int? candidateId = null;
         if (user.Role == UserRole.Candidate)
@@ -39,9 +36,16 @@ public class AuthService : IAuthService
                 .FirstOrDefaultAsync();
         }
 
-
-        var token = GenerateJwtToken(user);
-        return new LoginResponseDto { Token = token, Role = user.Role.ToString(), UserId = user.Id, Email = user.Email, CandidateId = candidateId };
+        var token = GenerateJwtToken(user, candidateId);
+        return new LoginResponseDto
+        {
+            Token = token,
+            Role = user.Role.ToString(),
+            RoleCode = (int)user.Role,
+            UserId = user.Id,
+            Email = user.Email,
+            CandidateId = candidateId
+        };
     }
 
 
@@ -176,7 +180,7 @@ public class AuthService : IAuthService
         return string.Concat(chars);
     }
 
-    private string GenerateJwtToken(User user)
+    private string GenerateJwtToken(User user, int? candidateId = null)
     {
         var keyString = _configuration["Jwt:Key"] ?? throw new InvalidOperationException("JWT key not configured.");
         var issuer = _configuration["Jwt:Issuer"] ?? "RecruitmentSystem";
@@ -200,6 +204,10 @@ public class AuthService : IAuthService
             new Claim(ClaimTypes.Role, user.Role.ToString()),
             new Claim(ClaimTypes.Name, user.Email) // Include Name claim
         };
+        if (candidateId.HasValue)
+        {
+            claims.Add(new Claim("candidate_id", candidateId.Value.ToString()));
+        }
 
         var token = new JwtSecurityToken(
             issuer: issuer,
