@@ -130,6 +130,7 @@ builder.Services.AddSingleton<IMeetingProvider, GoogleMeetProvider>();
 builder.Services.AddSingleton<IMeetingProvider, TeamsProvider>();
 builder.Services.AddSingleton<IMeetingProvider, ZoomProvider>();
 builder.Services.AddSingleton<IEncryptionService, DataProtectionEncryptionService>();
+builder.Services.AddScoped<IBackgroundVerificationService, BackgroundVerificationService>();
 
 var app = builder.Build();
 

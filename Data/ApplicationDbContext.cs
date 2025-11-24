@@ -25,6 +25,8 @@ public class ApplicationDbContext : DbContext
     public DbSet<Onboarding> Onboardings { get; set; }
     public DbSet<OnboardingTask> OnboardingTasks { get; set; }
     public DbSet<OnboardingDocument> OnboardingDocuments { get; set; }
+    public DbSet<BackgroundVerification> BackgroundVerifications { get; set; }
+    public DbSet<BackgroundVerificationDocument> BackgroundVerificationDocuments { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -171,6 +173,14 @@ public class ApplicationDbContext : DbContext
             .HasIndex(j => j.IsActive);
         modelBuilder.Entity<Notification>()
             .HasIndex(n => new { n.CandidateId, n.Read });
+
+        modelBuilder.Entity<BackgroundVerification>()
+            .HasIndex(b => b.PublicId)
+            .IsUnique();
+        modelBuilder.Entity<BackgroundVerification>()
+            .HasIndex(b => new { b.CandidateId, b.JobId });
+        modelBuilder.Entity<BackgroundVerificationDocument>()
+            .HasIndex(d => d.BackgroundVerificationId);
     }
 }
 

@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using RecruitmentSystem.API.Data;
 
@@ -11,9 +12,11 @@ using RecruitmentSystem.API.Data;
 namespace RecruitmentSystem.API.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251124175738_AddOnboardingExtras")]
+    partial class AddOnboardingExtras
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -91,121 +94,6 @@ namespace RecruitmentSystem.API.Migrations
                     b.HasIndex("ApplicationId");
 
                     b.ToTable("ApplicationStatusHistories");
-                });
-
-            modelBuilder.Entity("RecruitmentSystem.API.Models.BackgroundVerification", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("CandidateId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("ChecksRun")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime?>("CompletedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("ExternalId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("IssuesFound")
-                        .HasColumnType("int");
-
-                    b.Property<int>("JobId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Notes")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Provider")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<Guid>("PublicId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<int>("Risk")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Stages")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime?>("StartedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("int");
-
-                    b.Property<int>("TurnaroundDays")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("PublicId")
-                        .IsUnique();
-
-                    b.HasIndex("CandidateId", "JobId");
-
-                    b.ToTable("BackgroundVerifications");
-                });
-
-            modelBuilder.Entity("RecruitmentSystem.API.Models.BackgroundVerificationDocument", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("BackgroundVerificationId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Comments")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("FileName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<long?>("FileSize")
-                        .HasColumnType("bigint");
-
-                    b.Property<string>("FileType")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<Guid>("PublicId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime>("UploadedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int?>("UploadedById")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Url")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("BackgroundVerificationId");
-
-                    b.ToTable("BackgroundVerificationDocuments");
                 });
 
             modelBuilder.Entity("RecruitmentSystem.API.Models.Candidate", b =>
@@ -1169,15 +1057,6 @@ namespace RecruitmentSystem.API.Migrations
                     b.Navigation("Application");
                 });
 
-            modelBuilder.Entity("RecruitmentSystem.API.Models.BackgroundVerificationDocument", b =>
-                {
-                    b.HasOne("RecruitmentSystem.API.Models.BackgroundVerification", null)
-                        .WithMany("Documents")
-                        .HasForeignKey("BackgroundVerificationId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
             modelBuilder.Entity("RecruitmentSystem.API.Models.CandidateEducation", b =>
                 {
                     b.HasOne("RecruitmentSystem.API.Models.Candidate", "Candidate")
@@ -1279,11 +1158,6 @@ namespace RecruitmentSystem.API.Migrations
             modelBuilder.Entity("RecruitmentSystem.API.Models.Application", b =>
                 {
                     b.Navigation("StatusHistory");
-                });
-
-            modelBuilder.Entity("RecruitmentSystem.API.Models.BackgroundVerification", b =>
-                {
-                    b.Navigation("Documents");
                 });
 
             modelBuilder.Entity("RecruitmentSystem.API.Models.Candidate", b =>
