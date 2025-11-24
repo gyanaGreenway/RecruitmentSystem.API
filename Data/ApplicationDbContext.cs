@@ -19,6 +19,12 @@ public class ApplicationDbContext : DbContext
     public DbSet<CandidateEducation> CandidateEducation { get; set; }
     public DbSet<CandidateSkill> CandidateSkills { get; set; }
     public DbSet<CandidateProject> CandidateProjects { get; set; }
+    public DbSet<OfferLetter> OfferLetters { get; set; }
+    public DbSet<Interview> Interviews { get; set; }
+    public DbSet<InterviewFeedback> InterviewFeedbacks { get; set; }
+    public DbSet<Onboarding> Onboardings { get; set; }
+    public DbSet<OnboardingTask> OnboardingTasks { get; set; }
+    public DbSet<OnboardingDocument> OnboardingDocuments { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -94,6 +100,72 @@ public class ApplicationDbContext : DbContext
             .WithMany(c => c.Projects)
             .HasForeignKey(p => p.CandidateId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<OfferLetter>()
+            .HasIndex(o => new { o.CandidateId, o.JobId });
+        modelBuilder.Entity<OfferLetter>()
+            .Property(o => o.Status)
+            .HasConversion<int>();
+        modelBuilder.Entity<OfferLetter>()
+            .Property(o => o.AcceptanceProbability)
+            .HasPrecision(5,2); // store as decimal if changed later
+        modelBuilder.Entity<OfferLetter>()
+            .Property(o => o.PublicId)
+            .HasDefaultValueSql("NEWSEQUENTIALID()");
+        modelBuilder.Entity<OfferLetter>()
+            .HasIndex(o => o.PublicId)
+            .IsUnique();
+
+        modelBuilder.Entity<Interview>()
+            .Property(i => i.PublicId)
+            .HasDefaultValueSql("NEWSEQUENTIALID()");
+        modelBuilder.Entity<Interview>()
+            .HasIndex(i => i.PublicId)
+            .IsUnique();
+        modelBuilder.Entity<Interview>()
+            .HasIndex(i => new { i.CandidateId, i.JobId, i.Stage });
+
+        modelBuilder.Entity<InterviewFeedback>()
+            .Property(f => f.PublicId)
+            .HasDefaultValueSql("NEWSEQUENTIALID()");
+        modelBuilder.Entity<InterviewFeedback>()
+            .HasIndex(f => f.PublicId)
+            .IsUnique();
+        modelBuilder.Entity<InterviewFeedback>()
+            .HasIndex(f => new { f.InterviewId, f.InterviewerId });
+
+        modelBuilder.Entity<Onboarding>()
+            .Property(o => o.PublicId)
+            .HasDefaultValueSql("NEWSEQUENTIALID()");
+        modelBuilder.Entity<Onboarding>()
+            .HasIndex(o => o.PublicId)
+            .IsUnique();
+        modelBuilder.Entity<Onboarding>()
+            .HasIndex(o => new { o.CandidateId, o.JobId });
+        modelBuilder.Entity<Onboarding>()
+            .HasMany(o => o.Tasks)
+            .WithOne()
+            .HasForeignKey(t => t.OnboardingId)
+            .OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity<Onboarding>()
+            .HasMany(o => o.Documents)
+            .WithOne()
+            .HasForeignKey(d => d.OnboardingId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<OnboardingTask>()
+            .Property(t => t.PublicId)
+            .HasDefaultValueSql("NEWSEQUENTIALID()");
+        modelBuilder.Entity<OnboardingTask>()
+            .HasIndex(t => t.PublicId)
+            .IsUnique();
+
+        modelBuilder.Entity<OnboardingDocument>()
+            .Property(d => d.PublicId)
+            .HasDefaultValueSql("NEWSEQUENTIALID()");
+        modelBuilder.Entity<OnboardingDocument>()
+            .HasIndex(d => d.PublicId)
+            .IsUnique();
 
         modelBuilder.Entity<Job>()
             .HasIndex(j => j.IsActive);

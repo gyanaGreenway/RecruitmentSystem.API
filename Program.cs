@@ -123,6 +123,13 @@ builder.Services.AddScoped<IJobService, JobService>();
 builder.Services.AddScoped<ICandidateService, CandidateService>();
 builder.Services.AddScoped<IApplicationService, ApplicationService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IOfferService, OfferService>();
+builder.Services.AddScoped<IInterviewService, InterviewService>();
+builder.Services.AddScoped<IOnboardingService, OnboardingService>();
+builder.Services.AddSingleton<IMeetingProvider, GoogleMeetProvider>();
+builder.Services.AddSingleton<IMeetingProvider, TeamsProvider>();
+builder.Services.AddSingleton<IMeetingProvider, ZoomProvider>();
+builder.Services.AddSingleton<IEncryptionService, DataProtectionEncryptionService>();
 
 var app = builder.Build();
 

@@ -6,7 +6,7 @@ namespace RecruitmentSystem.API.Migrations
 {
     public partial class AdjustCandidateFilterAndSalary : Migration
     {
-        protected override void Up(MigrationBuilder migrationBuilder)
+        protected override void Up(MigrationBuilder migrationBuilder) 
         {
             // Ensure Salary column precision
             migrationBuilder.AlterColumn<decimal>(
