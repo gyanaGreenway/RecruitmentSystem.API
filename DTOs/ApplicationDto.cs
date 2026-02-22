@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using RecruitmentSystem.API.Models;
+using RecruitmentSystem.API.Common;
 
 namespace RecruitmentSystem.API.DTOs;
 
@@ -47,15 +48,6 @@ public class ApplicationFilterDto
     public int PageSize { get; set; } = 10;
     public string? SortBy { get; set; } = "AppliedDate";
     public string? SortOrder { get; set; } = "desc";
-}
-
-public class PagedResultDto<T>
-{
-    public List<T> Items { get; set; } = new();
-    public int TotalCount { get; set; }
-    public int PageNumber { get; set; }
-    public int PageSize { get; set; }
-    public int TotalPages => (int)Math.Ceiling(TotalCount / (double)PageSize);
 }
 
 public class ApplicationStatusHistoryDto

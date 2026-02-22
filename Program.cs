@@ -140,21 +140,28 @@ if (app.Environment.IsDevelopment())
     app.UseDeveloperExceptionPage();
 }
 
+// Serve static files for Swagger custom styling - ensure this runs early so custom assets load
+app.UseStaticFiles();
+
 // Swagger UI
 app.UseSwagger();
 app.UseSwaggerUI(c =>
 {
     c.SwaggerEndpoint("/swagger/v1/swagger.json", "Recruitment System API v1");
     c.RoutePrefix = string.Empty; // Set Swagger UI at the app's root
+
+    // Use custom index.html from wwwroot/swagger-ui
+    c.IndexStream = () => File.OpenRead(Path.Combine(app.Environment.WebRootPath ?? "wwwroot", "swagger-ui", "index.html"));
+
     c.DocumentTitle = "Recruitment System API Documentation";
     c.DefaultModelsExpandDepth(-1);
     c.DocExpansion(Swashbuckle.AspNetCore.SwaggerUI.DocExpansion.List);
 
-    // Custom CSS for beautiful UI
+    // Keep custom injection points (still referenced by custom index if needed)
     c.InjectStylesheet("/swagger-ui/custom.css");
     c.InjectJavascript("/swagger-ui/custom.js");
 
-    // Enable dark mode and custom theme
+    // Enable features
     c.EnableDeepLinking();
     c.EnableFilter();
     c.EnableValidator();
@@ -162,9 +169,6 @@ app.UseSwaggerUI(c =>
 });
 
 app.UseHttpsRedirection();
-
-// Serve static files for Swagger custom styling
-app.UseStaticFiles();
 
 app.UseCors("AllowAngular");
 app.UseAuthentication();

@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Recruitment System API Docs</title>
+
+  <!-- Minimal inline styles as a fallback in case external CSS fails to load -->
+  <style>
+    /* Basic layout fallback */
+    .split-container{display:flex;min-height:100vh;background:#f7fafc}
+    .sidebar{width:300px;padding:16px;box-sizing:border-box;border-right:1px solid #eee;background:#fff}
+    .brand{font-weight:700;margin-bottom:8px}
+    .content{flex:1;padding:20px}
+    .menu-btn{padding:6px 8px;margin-right:6px}
+    #copilot-error{background:#ffe8e8;border:1px solid #f5c6c6;padding:12px;border-radius:6px;color:#7a1a1a;display:none}
+    #copilot-loader{padding:12px;background:#eef2ff;border-radius:6px;margin-bottom:12px}
+  </style>
+
+  <!-- Swagger UI CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@4/swagger-ui.css" />
+  <!-- Custom CSS (served from wwwroot/swagger-ui/custom.css) -->
+  <link rel="stylesheet" href="/swagger-ui/custom.css" />
+</head>
+<body>
+  <div class="split-container">
+    <aside class="sidebar">
+      <div class="brand">Recruitment System</div>
+
+      <div class="sidebar-controls">
+        <div class="control-row">
+          <input id="api-search" type="text" placeholder="Search endpoints or tags..." />
+        </div>
+        <div class="control-row token-row">
+          <input id="jwt-token" type="text" placeholder="Paste JWT token here" />
+          <button id="btn-authorize" class="btn small">Authorize</button>
+        </div>
+        <div class="control-row">
+          <button id="show-swagger" class="menu-btn active">API Explorer</button>
+          <button id="show-redoc" class="menu-btn">ReDoc</button>
+        </div>
+        <div class="control-row">
+          <label class="theme-toggle">
+            <input id="theme-toggle" type="checkbox" />
+            <span>Dark</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="info">
+        <p>Version: v1</p>
+        <p><small>Use the sidebar to switch views.</small></p>
+      </div>
+      <div class="links">
+        <a href="/swagger/v1/swagger.json" target="_blank">OpenAPI JSON</a>
+      </div>
+      <div class="sidebar-footer">
+        <small>Built with Swagger UI & ReDoc</small>
+      </div>
+    </aside>
+
+    <main class="content">
+      <div id="copilot-loader">Loading documentation...</div>
+      <div id="copilot-error"></div>
+      <div id="swagger-ui" class="swagger-panel"></div>
+    </main>
+  </div>
+
+  <!-- Swagger UI scripts -->
+  <script src="https://unpkg.com/swagger-ui-dist@4/swagger-ui-bundle.js"></script>
+  <script src="https://unpkg.com/swagger-ui-dist@4/swagger-ui-standalone-preset.js"></script>
+  <!-- ReDoc (for alternative view) -->
+  <script src="https://cdn.redoc.ly/redoc/latest/bundles/redoc.standalone.js"></script>
+  <!-- Custom JS -->
+  <script src="/swagger-ui/custom.js"></script>
+
+  <script>
+    // Basic runtime checks: if vendor libs didn't load, show a helpful message
+    function showVendorError(msg) {
+      document.getElementById('copilot-loader').style.display = 'none';
+      const e = document.getElementById('copilot-error');
+      e.style.display = 'block';
+      e.textContent = msg + ' Check console for errors.';
+    }
+
+    // Wait a short time for scripts to load; if swagger not present, show message
+    setTimeout(() => {
+      if (typeof SwaggerUIBundle === 'undefined') {
+        showVendorError('Failed to load Swagger UI scripts from CDN.');
+      } else {
+        // hide loader once vendor script is available; custom.js will initialize UI
+        document.getElementById('copilot-loader').style.display = 'none';
+      }
+    }, 1500);
+  </script>
+</body>
+</html>
